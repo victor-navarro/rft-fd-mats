@@ -6,15 +6,13 @@ source("helpers.R")
 set.seed(1234)
 
 # read image convert to greyscale, upsample to 100 x 100 and convert to float
-# -1 to 1 range
 img <- image_read("mnist.jpg") %>%
   image_convert(type = "Grayscale") %>%
   image_scale("100x100!") %>%
   image_data() %>%
   as.numeric() %>%
   matrix(nrow = 100, ncol = 100)
-# standardize
-img <- (img - mean(img)) / sd(img)
+img <- img / sd(img)
 
 # make a data.frame
 dat <- data.frame(
@@ -35,8 +33,6 @@ dat <- rbind(dat, dat_noise)
 
 # add noise to the image
 img_noise <- img + noise
-# standardize
-# img_noise <- (img_noise - mean(img_noise)) / sd(img_noise)
 # add to data.frame
 dat_noise <- data.frame(
   v = as.vector(img_noise),
@@ -46,17 +42,23 @@ dat_noise <- data.frame(
 dat <- rbind(dat, dat_noise)
 
 
-# smooth the image with a gaussian kernel
+# smooth image and noise with a gaussian kernel
 fwhm <- 10
 sd_fwhm <- fwhm / (2 * sqrt(2 * log(2))) # full width at half maximum
 kernel <- gaussian2d(15, sd_fwhm)
 
-# convolve
-img_noise_sd <- sd(img_noise)
-img_noise_conv <- gsignal::conv2(img_noise, kernel, shape = "same")
+
+noise_conv <- conv2(noise - mean(noise), kernel, shape = "same")
+img_conv <- conv2(img - mean(img), kernel, shape = "same")
 
 # rescale
-img_noise_conv <- (img_noise_conv / sd(img_noise_conv)) * img_noise_sd
+noise_conv <- noise_conv * sqrt(sd(noise)^2 / sd(noise_conv)^2)
+img_conv <- img_conv * sqrt(sd(img)^2 / sd(img_conv)^2)
+# remean
+img_conv <- img_conv + mean(img)
+noise_conv <- noise_conv + mean(noise)
+
+img_noise_conv <- noise_conv + img_conv
 
 # set critical z threshold
 dat_conv <- data.frame(
