@@ -3,7 +3,7 @@ library(magick)
 library(gsignal)
 source("helpers.R")
 
-set.seed(1234)
+set.seed(12)
 
 # read image convert to greyscale, upsample to 100 x 100 and convert to float
 img <- image_read("mnist.jpg") %>%
@@ -91,7 +91,7 @@ bon_corr <- dat_conv
 bon_corr$type <- "Bonferroni"
 bon_corr$mask <- bon_corr$v > qnorm(1 - (0.05 / (100 * 100)))
 
-z_rft <- 3.06 # for 10 resels
+z_rft <- 3.79 # for 100 resels
 rft_dat <- dat_conv
 rft_dat$type <- "RFT"
 rft_dat$mask <- rft_dat$v > z_rft
